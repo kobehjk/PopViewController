@@ -39,9 +39,9 @@ open class CustomPopViewController: UIViewController {
         func origin(_ view: UIView, size: CGSize = UIScreen.main.bounds.size) -> CGPoint {
             switch self {
             case .top: return CGPoint(x: (size.width - view.frame.width) / 2, y: 0)
-            case .center: return CGPoint(x: (size.width - view.frame.width) / 2, y:  (screenH/2 - view.frame.height/2))
+            case .center: return CGPoint(x: (size.width - view.frame.width) / 2, y:  (size.height/2 - view.frame.height/2))
             case .bottom: return CGPoint(x: (size.width - view.frame.width) / 2, y: size.height - view.frame.height)
-            case .kkbCenter: return CGPoint(x: (size.width - view.frame.width) / 2, y: (size.height - view.frame.height - 100 * kscale) / 2)
+            case .kkbCenter: return CGPoint(x: (size.width - view.frame.width) / 2, y: (size.height - view.frame.height - view.safeAreaInsets.top) / 2)
             }
         }
     }
@@ -99,7 +99,7 @@ open class CustomPopViewController: UIViewController {
     }
     
     deinit {
-        self.removeFromParent()
+        self.removeFromParentViewController()
     }
     
 // MARK: - Overrides
@@ -128,9 +128,9 @@ public extension CustomPopViewController {
         let controller = CustomPopViewController()
         controller.defaultConfigure()
         
-        UIApplication.shared.delegate?.window??.rootViewController?.addChild(controller)
-        screen?.addSubview(controller.view)
-        controller.didMove(toParent: UIApplication.shared.delegate?.window??.rootViewController)
+        UIApplication.shared.delegate?.window??.rootViewController?.addChildViewController(controller)
+        UIApplication.shared.delegate?.window??.rootViewController?.view.addSubview(controller.view)
+        controller.didMove(toParentViewController: UIApplication.shared.delegate?.window??.rootViewController)
         
         return controller
     }
@@ -142,11 +142,11 @@ public extension CustomPopViewController {
     
     @discardableResult
     func show(_ childViewController: UIViewController) -> CustomPopViewController {
-        self.addChild(childViewController)
+        self.addChildViewController(childViewController)
         popupView = childViewController.view
         configure()
         
-        childViewController.didMove(toParent: self)
+        childViewController.didMove(toParentViewController: self)
         
         show(layout, animation: animation) {
             self.defaultContentOffset = self.baseScrollView.contentOffset
@@ -198,9 +198,9 @@ private extension CustomPopViewController {
     }
     
     func registerNotification() {
-        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerWillShowKeyboard(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerWillHideKeyboard(_:)), name:UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerDidHideKeyboard(_:)), name:UIResponder.keyboardDidHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerWillShowKeyboard(_:)), name: .UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerWillHideKeyboard(_:)), name:.UIKeyboardWillHide, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(CustomPopViewController.popupControllerDidHideKeyboard(_:)), name:.UIKeyboardDidHide, object: nil)
     }
     
     func unregisterNotification() {
@@ -240,7 +240,7 @@ private extension CustomPopViewController {
     }
     
     func updateLayouts() {
-        guard let child = self.children.last as? PopupContentViewController else { return }
+        guard let child = self.childViewControllers.last as? PopupContentViewController else { return }
         popupView.frame.size = child.sizeForPopup(self, size: maximumSize, showingKeyboard: isShowingKeyboard)
         popupView.frame.origin.x = layout.origin(popupView).x
         baseScrollView.frame = view.frame
@@ -266,7 +266,7 @@ private extension CustomPopViewController {
     
     @objc func popupControllerWillShowKeyboard(_ notification: Notification) {
         self.isShowingKeyboard = true
-        guard let obj = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
+        guard let obj = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue else {
             return
         }
         
@@ -299,16 +299,16 @@ private extension CustomPopViewController {
         popupView.endEditing(true)
         popupView.removeFromSuperview()
         
-        children.forEach { $0.removeFromParent() }
+        childViewControllers.forEach { $0.removeFromParentViewController() }
         
         view.isHidden = true
         self.closedHandler?(self)
         
-        self.removeFromParent()
+        self.removeFromParentViewController()
     }
     
     func show(_ layout: PopupLayout, animation: PopupAnimation, completion: @escaping PopupAnimateCompletion) {
-        guard let childViewController = children.last as? PopupContentViewController else {
+        guard let childViewController = childViewControllers.last as? PopupContentViewController else {
             return
         }
         
@@ -332,7 +332,7 @@ private extension CustomPopViewController {
     }
     
     func hide(_ animation: PopupAnimation, completion: @escaping PopupAnimateCompletion) {
-        guard let child = children.last as? PopupContentViewController else {
+        guard let child = childViewControllers.last as? PopupContentViewController else {
             return
         }
         
@@ -366,7 +366,7 @@ private extension CustomPopViewController {
     }
     
     func move(_ origin: CGPoint) {
-        guard let child = children.last as? PopupContentViewController else {
+        guard let child = childViewControllers.last as? PopupContentViewController else {
             return
         }
         popupView.frame.size = child.sizeForPopup(self, size: maximumSize, showingKeyboard: isShowingKeyboard)
@@ -376,7 +376,7 @@ private extension CustomPopViewController {
     }
     
     func back() {
-        guard let child = children.last as? PopupContentViewController else {
+        guard let child = childViewControllers.last as? PopupContentViewController else {
             return
         }
         popupView.frame.size = child.sizeForPopup(self, size: maximumSize, showingKeyboard: isShowingKeyboard)

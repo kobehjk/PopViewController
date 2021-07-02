@@ -107,7 +107,7 @@ extension CustomPresentationController {
 
 // MARK: - UI事件处理
 extension CustomPresentationController {
-    func dimmingViewTapped(_ sender: UITapGestureRecognizer) {
+    @objc func dimmingViewTapped(_ sender: UITapGestureRecognizer) {
         self.presentingViewController.dismiss(animated: true, completion: nil)
     }
 }
