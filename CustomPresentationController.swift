@@ -8,26 +8,31 @@
 
 import UIKit
 
-class CustomPresentationController: UIPresentationController, UIViewControllerTransitioningDelegate {
+class CustomPresentationController: UIPresentationController, UIViewControllerTransitioningDelegate
+{
     
     let CORNER_RADIUS: CGFloat = 16
     var presentationWrappingView: UIView? = nil // 被添加动画效果的view，在presentedViewController的基础上添加了其他效果
     var dimmingView: UIView? = nil  // alpha为0.5的黑色蒙版
     
-    override init(presentedViewController: UIViewController, presenting presentingViewController: UIViewController?) {
+    override init(presentedViewController: UIViewController, presenting presentingViewController: UIViewController?)
+    {
         super.init(presentedViewController: presentedViewController, presenting: presentingViewController)
         
         presentedViewController.modalPresentationStyle = .custom
     }
     
-    override var presentedView : UIView? {
+    override var presentedView : UIView?
+    {
         return self.presentationWrappingView
     }
 }
 
 // MARK: - 两组对应的方法，实现自定义presentation
-extension CustomPresentationController {
-    override func presentationTransitionWillBegin() {
+extension CustomPresentationController
+{
+    override func presentationTransitionWillBegin()
+    {
         let presentationWrapperView = UIView(frame: self.frameOfPresentedViewInContainerView) // 添加阴影效果
         
         /// 在重写父类的presentedView方法中，返回了self.presentationWrappingView，这个方法表示需要添加动画效果的视图
@@ -81,15 +86,18 @@ extension CustomPresentationController {
     }
     
     /// 如果present没有完成，把dimmingView和wrappingView都清空，这些临时视图用不到了
-    override func presentationTransitionDidEnd(_ completed: Bool) {
-        if !completed {
+    override func presentationTransitionDidEnd(_ completed: Bool)
+    {
+        if !completed
+        {
             self.presentationWrappingView = nil
             self.dimmingView = nil
         }
     }
     
     /// dismiss开始时，让dimmingView完全透明，这个动画和animator中的动画同时发生
-    override func dismissalTransitionWillBegin() {
+    override func dismissalTransitionWillBegin()
+    {
         let transitionCoordinator = self.presentingViewController.transitionCoordinator
         transitionCoordinator?.animate(alongsideTransition: { (context: UIViewControllerTransitionCoordinatorContext) -> Void in
             self.dimmingView?.alpha = 0
@@ -97,8 +105,10 @@ extension CustomPresentationController {
     }
     
     /// dismiss结束时，把dimmingView和wrappingView都清空，这些临时视图用不到了
-    override func dismissalTransitionDidEnd(_ completed: Bool) {
-        if completed {
+    override func dismissalTransitionDidEnd(_ completed: Bool)
+    {
+        if completed
+        {
             self.presentationWrappingView = nil
             self.dimmingView = nil
         }
@@ -106,41 +116,51 @@ extension CustomPresentationController {
 }
 
 // MARK: - UI事件处理
-extension CustomPresentationController {
-    @objc func dimmingViewTapped(_ sender: UITapGestureRecognizer) {
+extension CustomPresentationController
+{
+    @objc func dimmingViewTapped(_ sender: UITapGestureRecognizer)
+    {
         self.presentingViewController.dismiss(animated: true, completion: nil)
     }
 }
 
 // MARK: - Autolayout
-extension CustomPresentationController {
-    override func preferredContentSizeDidChange(forChildContentContainer container: UIContentContainer) {
+extension CustomPresentationController
+{
+    override func preferredContentSizeDidChange(forChildContentContainer container: UIContentContainer)
+    {
         super.preferredContentSizeDidChange(forChildContentContainer: container)
         
         if let container = container as? UIViewController,
-            container == self.presentedViewController{
+            container == self.presentedViewController
+        {
             self.containerView?.setNeedsLayout()
         }
     }
     
-    override func size(forChildContentContainer container: UIContentContainer, withParentContainerSize parentSize: CGSize) -> CGSize {
+    override func size(forChildContentContainer container: UIContentContainer, withParentContainerSize parentSize: CGSize) -> CGSize
+    {
         if let container = container as? UIViewController,
-            container == self.presentedViewController{
+            container == self.presentedViewController
+        {
             return container.preferredContentSize
         }
-        else {
+        else
+        {
             return super.size(forChildContentContainer: container, withParentContainerSize: parentSize)
         }
     }
     
-    override var frameOfPresentedViewInContainerView : CGRect {
+    override var frameOfPresentedViewInContainerView : CGRect
+    {
         let containerViewBounds = self.containerView?.bounds
         let presentedViewContentSize = self.size(forChildContentContainer: self.presentedViewController, withParentContainerSize: (containerViewBounds?.size)!)
         let presentedViewControllerFrame = CGRect(x: containerViewBounds!.origin.x, y: containerViewBounds!.maxY - presentedViewContentSize.height, width: (containerViewBounds?.size.width)!, height: presentedViewContentSize.height)
         return presentedViewControllerFrame
     }
     
-    override func containerViewWillLayoutSubviews() {
+    override func containerViewWillLayoutSubviews()
+    {
         super.containerViewWillLayoutSubviews()
         
         self.dimmingView?.frame = (self.containerView?.bounds)!
@@ -149,16 +169,20 @@ extension CustomPresentationController {
 }
 
 // MARK: - 实现协议UIViewControllerTransitioningDelegate
-extension CustomPresentationController {
-    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+extension CustomPresentationController
+{
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController?
+    {
         return self
     }
     
-    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning?
+    {
         return CustomPresentationAnimator()
     }
     
-    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning?
+    {
         return CustomPresentationAnimator()
     }
 }
